@@ -81,6 +81,9 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     /** The maximum distance (in meters) the user is willing to walk. Defaults to unlimited. */
     public double maxWalkDistance = Double.MAX_VALUE;
+    
+    /** The amount of co2 produced by the car on transit. (Defaults to 0 when not using cars) */
+    public Double co2Produced;
 
     /**
      * The maximum time (in seconds) of pre-transit travel when using drive-to-transit (park and
@@ -429,6 +432,9 @@ public class RoutingRequest implements Cloneable, Serializable {
         // So that they are never null.
         from = new GenericLocation();
         to = new GenericLocation();
+        
+        //Default value when not using cars.
+        co2Produced = 0.0;
     }
 
     public RoutingRequest(TraverseModeSet modes) {
@@ -650,6 +656,10 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     public void setToString(String to) {
         this.to = GenericLocation.fromOldStyleString(to);
+    }
+    
+    public void setCo2Produced(Double co2Produced) {
+    	this.co2Produced = co2Produced;
     }
 
     /**
@@ -925,7 +935,8 @@ public class RoutingRequest implements Cloneable, Serializable {
                 && ignoreRealtimeUpdates == other.ignoreRealtimeUpdates
                 && disableRemainingWeightHeuristic == other.disableRemainingWeightHeuristic
                 && Objects.equal(startingTransitTripId, other.startingTransitTripId)
-                && useTraffic == other.useTraffic;
+                && useTraffic == other.useTraffic
+        		&& co2Produced == other.co2Produced;
     }
 
     /**

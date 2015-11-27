@@ -486,6 +486,10 @@ otp.widgets.ItinerariesWidget =
                 otp.util.Itin.distanceString(carDistance) + '</div>')
         }
 
+        //TRANSLATORS: Co2 produced for this trip
+        tripSummary.append('<div class="otp-itinTripSummaryLabel">' + _tr("Co2") + '</div><div class="otp-itinTripSummaryText">' +
+            itin.itinData.co2 + ' g</div>')	
+                
         if(itin.hasTransit) {
             //TRANSLATORS: how many public transit transfers in a trip
             tripSummary.append('<div class="otp-itinTripSummaryLabel">' + _tr("Transfers") + '</div><div class="otp-itinTripSummaryText">'+itin.itinData.transfers+'</div>')

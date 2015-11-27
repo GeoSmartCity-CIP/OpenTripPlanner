@@ -69,6 +69,10 @@ public abstract class RoutingResource {
     /** The end location (see fromPlace for format). */
     @QueryParam("toPlace")
     protected String toPlace;
+    
+    /** The co2Produced */
+    @QueryParam("co2Produced")
+    protected Double co2Produced;
 
     /** An ordered list of intermediate locations to be visited (see the fromPlace for format). Parameter can be specified multiple times. */
     @QueryParam("intermediatePlaces")
@@ -398,6 +402,10 @@ public abstract class RoutingResource {
                 request.setDateTime(date, time, tz);
             }
         }
+        
+        if(co2Produced != null) {
+        	request.setCo2Produced(co2Produced);
+        }
 
         if (wheelchair != null)
             request.setWheelchairAccessible(wheelchair);
@@ -513,10 +521,7 @@ public abstract class RoutingResource {
             request.setOptimize(optimize);
 
         /* Temporary code to get bike/car parking and renting working. */
-        if (modes != null) {
-            modes.applyToRoutingRequest(request);
-            request.setModes(request.modes);
-        }
+        if (modes != null) modes.applyToRoutingRequest(request);
 
         if (request.allowBikeRental && bikeSpeed == null) {
             //slower bike speed for bike sharing, based on empirical evidence from DC.

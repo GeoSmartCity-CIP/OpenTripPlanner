@@ -356,6 +356,7 @@ otp.modules.planner.PlannerModule =
             }
             if(this.maxHours) queryParams.maxHours = this.maxHours;
             if(this.numItineraries) queryParams.numItineraries = this.numItineraries;
+            if(this.co2Produced) queryParams.co2Produced = this.co2Produced;
             if(this.minTransferTime) queryParams.minTransferTime = this.minTransferTime;
             if(this.showIntermediateStops) queryParams.showIntermediateStops = this.showIntermediateStops;
 

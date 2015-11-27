@@ -112,6 +112,7 @@ otp.modules.analyst.AnalystModule =
             date : (this.date) ? moment(this.date, otp.config.locale.time.date_format).format("MM-DD-YYYY") : moment().format("MM-DD-YYYY"),
             mode : this.mode,
             maxWalkDistance : this.maxWalkDistance,
+            co2Produced : this.co2Produced,
             arriveBy : this.arriveBy,
             fromPlace : this.startLatLng.lat+','+this.startLatLng.lng,
             toPlace : this.startLatLng.lat+','+this.startLatLng.lng

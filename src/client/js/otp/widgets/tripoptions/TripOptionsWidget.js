@@ -451,6 +451,47 @@ otp.widgets.tripoptions.WheelChairSelector =
     }
 });
 
+//** Co2Selector **//
+
+otp.widgets.tripoptions.Co2Selector =
+    otp.Class(otp.widgets.tripoptions.TripOptionsWidgetControl, {
+
+    id           :  null,
+    label        : _tr("Co2 produced g/km:"),
+
+    initialize : function(tripWidget) {
+
+        otp.widgets.tripoptions.TripOptionsWidgetControl.prototype.initialize.apply(this, arguments);
+
+        this.id = tripWidget.id;
+
+
+        ich['otp-tripOptions-co2']({
+            widgetId : this.id,
+            label : this.label,
+        }).appendTo(this.$());
+
+    },
+
+    doAfterLayout : function() {
+        var this_ = this;
+
+        $("#"+this.id+"-co2-input").change(function() {
+            this_.tripWidget.module.co2Produced = this.value;
+        });
+    },
+
+    restorePlan : function(data) {
+        if(data.queryParams.wheelchair) {
+            $("#"+this.id+"-co2-input").prop("value", data.queryParams.co2Produced);
+        }
+    },
+
+    isApplicableForMode : function(mode) {
+        return (mode == "CAR");
+    }
+});
+
 
 //** ModeSelector **//
 

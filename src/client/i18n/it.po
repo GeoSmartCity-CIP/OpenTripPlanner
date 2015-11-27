@@ -1234,6 +1234,10 @@ msgstr "Ora"
 msgid "Wheelchair accesible trip:"
 msgstr "Percorso accessibile:"
 
+msgid "Co2 produced g/km:"
+msgstr "Co2 prodotto g/km:"
+
+
 #. Label for dropdown Travel by: [mode of transport]
 #: src/client/js/otp/widgets/tripoptions/TripOptionsWidget.js:474
 #, fuzzy

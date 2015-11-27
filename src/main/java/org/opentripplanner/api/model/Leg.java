@@ -81,6 +81,11 @@ public class Leg {
     public Double distance = null;
     
     /**
+     * How much co2 is produced on transit.
+     */
+    public long co2 = 0;
+    
+    /**
      * Is this leg a traversing pathways?
      */
     public Boolean pathway = false;

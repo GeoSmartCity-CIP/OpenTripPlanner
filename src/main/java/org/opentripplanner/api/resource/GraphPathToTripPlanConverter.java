@@ -13,14 +13,26 @@
 
 package org.opentripplanner.api.resource;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.LineString;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
+
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
-import org.opentripplanner.api.model.*;
+import org.opentripplanner.api.common.PropertyReader;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.api.model.Place;
+import org.opentripplanner.api.model.RelativeDirection;
+import org.opentripplanner.api.model.TripPlan;
+import org.opentripplanner.api.model.VertexType;
+import org.opentripplanner.api.model.WalkStep;
 import org.opentripplanner.common.geometry.DirectionUtils;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
@@ -28,8 +40,23 @@ import org.opentripplanner.common.model.P2;
 import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
-import org.opentripplanner.routing.core.*;
-import org.opentripplanner.routing.edgetype.*;
+import org.opentripplanner.routing.core.RoutingContext;
+import org.opentripplanner.routing.core.RoutingRequest;
+import org.opentripplanner.routing.core.ServiceDay;
+import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.core.TraverseModeSet;
+import org.opentripplanner.routing.edgetype.AreaEdge;
+import org.opentripplanner.routing.edgetype.ElevatorAlightEdge;
+import org.opentripplanner.routing.edgetype.FreeEdge;
+import org.opentripplanner.routing.edgetype.OnboardEdge;
+import org.opentripplanner.routing.edgetype.PathwayEdge;
+import org.opentripplanner.routing.edgetype.PatternEdge;
+import org.opentripplanner.routing.edgetype.PatternInterlineDwell;
+import org.opentripplanner.routing.edgetype.RentABikeOffEdge;
+import org.opentripplanner.routing.edgetype.RentABikeOnEdge;
+import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.error.TrivialPathException;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
@@ -38,12 +65,19 @@ import org.opentripplanner.routing.location.TemporaryStreetLocation;
 import org.opentripplanner.routing.services.FareService;
 import org.opentripplanner.routing.spt.GraphPath;
 import org.opentripplanner.routing.trippattern.TripTimes;
-import org.opentripplanner.routing.vertextype.*;
+import org.opentripplanner.routing.vertextype.BikeParkVertex;
+import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
+import org.opentripplanner.routing.vertextype.ExitVertex;
+import org.opentripplanner.routing.vertextype.OnboardDepartVertex;
+import org.opentripplanner.routing.vertextype.StreetVertex;
+import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.opentripplanner.util.PolylineEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LineString;
 
 /**
  * A library class with only static methods used in converting internal GraphPaths to TripPlans, which are
@@ -115,9 +149,14 @@ public abstract class GraphPathToTripPlanConverter {
      */
     private static Itinerary adjustItinerary(RoutingRequest request, Itinerary itinerary) {
         // Check walk limit distance
+    	
         if (itinerary.walkDistance > request.maxWalkDistance) {
             itinerary.walkLimitExceeded = true;
         }
+        
+        //Calculate co2 production
+        calculateCo2(itinerary,request);
+        
         // Return itinerary
         return itinerary;
     }
@@ -483,7 +522,108 @@ public abstract class GraphPathToTripPlanConverter {
                     itinerary.walkTime += state.getTimeDeltaSeconds();
             }
         }
-    }
+    }    
+    
+    private static void calculateCo2(Itinerary itinerary, RoutingRequest request) {
+    	PropertyReader pr = null;
+    	try {
+    		pr = new PropertyReader("Co2ProductionParameters.properties");
+    	} catch (IOException e) {
+    		LOG.error("Errore nella lettura del file per il consumo dei mezzi pubblici");
+		}
+    	
+        for (Leg leg : itinerary.legs) {
+            if (leg.mode == null) continue;
+            	
+            if (leg.mode.equals(TraverseMode.CAR.toString())) 
+            {
+            	//Reads the car produced amount of co2
+            	//if no input parameter is given set a default production value
+            	if(request.co2Produced == null || request.co2Produced == 0) {
+            		leg.co2 = (long) (Double.valueOf(pr.getValue("carDefaultCo2Production"))*leg.distance)/1000;
+            	} else {
+            		leg.co2 = (long) (request.co2Produced*leg.distance)/1000;
+            	}
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.BUS.toString())) 
+            {
+            	//Reads the produced amount of co2 value for buses from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("busCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.FERRY.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("ferryCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.CABLE_CAR.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("cableCarCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.FUNICULAR.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("funicularCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.TRAINISH.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("trainishCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.BUSISH.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("busishCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.GONDOLA.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("gondolaCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.RAIL.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("railCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.SUBWAY.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("subwayCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.TRAM.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("tramCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+            else if (leg.mode.equals(TraverseMode.TRANSIT.toString())) 
+            {
+            	//Reads the produced amount of co2 value from the configuration file
+            	leg.co2 = (long) (Double.valueOf(pr.getValue("transitCo2Production"))*leg.distance)/1000;
+                itinerary.co2 += leg.co2;
+            }
+//            else if (leg.mode.equals(TraverseMode.LEG_SWITCH.toString())) 
+//            {
+//            	//Reads the produced amount of co2 value from the configuration file
+//            	leg.co2 = (long) (Double.valueOf(pr.getValue("legSwitchCo2Production"))*leg.distance);
+//                itinerary.co2 += leg.co2;
+//            }
+            else if (leg.mode.equals(TraverseMode.WALK.toString()) || leg.mode.equals(TraverseMode.BICYCLE.toString())) 
+            {
+            	leg.co2 = 0;
+            }
+        }
+    }    
 
     /**
      * Calculate the elevationGained and elevationLost fields of an {@link Itinerary}.
