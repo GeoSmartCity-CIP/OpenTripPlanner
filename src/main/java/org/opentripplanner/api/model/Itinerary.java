@@ -51,6 +51,12 @@ public class Itinerary {
      * How much time is spent on transit, in seconds.
      */
     public long transitTime = 0;
+    
+    /**
+     * How much co2 is produced on transit.
+     */
+    public long co2 = 0;
+    
     /**
      * How much time is spent waiting for transit to arrive, in seconds.
      */

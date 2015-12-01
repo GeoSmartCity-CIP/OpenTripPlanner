@@ -45,7 +45,6 @@ import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.edgetype.AreaEdge;
 import org.opentripplanner.routing.edgetype.ElevatorAlightEdge;
 import org.opentripplanner.routing.edgetype.FreeEdge;
