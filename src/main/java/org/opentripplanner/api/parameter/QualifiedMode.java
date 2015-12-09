@@ -59,6 +59,9 @@ public class QualifiedMode implements Serializable {
             }
             req.modes.setWalk(true); // need to walk after dropping the car off
         }
+        if(this.mode == TraverseMode.CAR && this.qualifiers.contains(Qualifier.DRIVETOPARK)) {
+        	req.driveToPark = true;
+        }
     }
 
     @Override
@@ -78,5 +81,5 @@ public class QualifiedMode implements Serializable {
 }
 
 enum Qualifier {
-    RENT, HAVE, PARK, KEEP
+    RENT, HAVE, PARK, KEEP, DRIVETOPARK
 }

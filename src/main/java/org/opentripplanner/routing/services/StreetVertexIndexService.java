@@ -104,4 +104,13 @@ public interface StreetVertexIndexService {
 	/** Get a vertex at a given coordinate, using the same logic as in Samples. Used in Analyst
 	 * so that origins and destinations are linked the same way. */
 	public Vertex getSampleVertexAt(Coordinate coordinate, boolean dest);
+
+	/** Returns all the park and ride vertices within a certain radius distance to the specified location. 
+	 * 
+	 * @param location Starting location
+	 * @param request Contains other request options.
+	 * @return The list of the vertices found
+	 * 
+	 * */
+	public List<Vertex> getNearbyParkAndRideVertices(RoutingRequest request);
 }

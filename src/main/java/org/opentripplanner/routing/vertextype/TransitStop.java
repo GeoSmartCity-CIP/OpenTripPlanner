@@ -35,6 +35,9 @@ public class TransitStop extends TransitStationStop {
     private boolean wheelchairEntrance;
 
     private boolean isEntrance;
+    
+    //Distance from the search point
+    private double searchPointDistance;
 
     /**
      * For stops that are deep underground, there is a time cost to entering and exiting the stop;
@@ -101,4 +104,14 @@ public class TransitStop extends TransitStationStop {
     public boolean isStreetLinkable() {
         return isEntrance() || !hasEntrances();
     }
+
+	public double getSearchPointDistance() {
+		return searchPointDistance;
+	}
+
+	public void setSearchPointDistance(double searchPointDistance) {
+		this.searchPointDistance = searchPointDistance;
+	}
+
+    
 }

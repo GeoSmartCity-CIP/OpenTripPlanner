@@ -13,8 +13,13 @@
 
 package org.opentripplanner.routing.impl;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.routing.algorithm.AStar;
@@ -35,12 +40,8 @@ import org.opentripplanner.standalone.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 /**
  * This class contains the logic for repeatedly building shortest path trees and accumulating paths through
@@ -92,7 +93,7 @@ public class GraphPathFinder {
 
         // Reuse one instance of AStar for all N requests, which are carried out sequentially
         AStar aStar = new AStar();
-        if (options.rctx == null) {
+        if (options.rctx == null || options.driveToPark) {
             options.setRoutingContext(router.graph);
             // The special long-distance heuristic should be sufficient to constrain the search to the right area.
         }
@@ -128,6 +129,10 @@ public class GraphPathFinder {
          * LongDistancePathService, we do not change the global default but override it here. */
         options.maxTransfers = 4;
         options.longDistance = true;
+        
+        if(options.driveToPark) {
+        	options.onlyTransitTrips = false;
+        }
 
         /* In long distance mode, maxWalk has a different meaning. It's the radius around the origin or destination
          * within which you can walk on the streets. If no value is provided, max walk defaults to the largest
@@ -192,6 +197,24 @@ public class GraphPathFinder {
 
         List<GraphPath> paths = null;
         try {
+        	
+        	//Handles driveToPark requests
+        	if(request.driveToPark) {
+        		List<Vertex> parkings = router.graph.streetIndex.getNearbyParkAndRideVertices(request);
+        		
+        		List<GraphPath> routesToParkings = new ArrayList<GraphPath>();
+        		for(Vertex park: parkings) {
+        			request.to = new GenericLocation(park.getCoordinate());
+        			List<GraphPath> leadToParking = getPaths(request);
+        			//TODO change error types when paths not found
+        			if(leadToParking.size() > 0) {
+        				//element 0 should be the closest route
+        				routesToParkings.add(leadToParking.get(0));
+        			}
+        		}
+        		return routesToParkings;
+        	}
+        	
             paths = getGraphPathsConsideringIntermediates(request);
             if (paths == null && request.wheelchairAccessible) {
                 // There are no paths that meet the user's slope restrictions.

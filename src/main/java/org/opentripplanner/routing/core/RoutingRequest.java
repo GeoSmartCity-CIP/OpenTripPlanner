@@ -84,7 +84,8 @@ public class RoutingRequest implements Cloneable, Serializable {
     
     /** The amount of co2 produced by the car on transit. (Defaults to 0 when not using cars) */
     public Double co2Produced;
-
+    /** search max distance. */
+    public int searchTolerance ;
     /**
      * The maximum time (in seconds) of pre-transit travel when using drive-to-transit (park and
      * ride or kiss and ride). Defaults to unlimited.
@@ -403,6 +404,7 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean bikeParkAndRide = false;
     public boolean parkAndRide  = false;
     public boolean kissAndRide  = false;
+    public boolean driveToPark = false;
 
     /* Whether we are in "long-distance mode". This is currently a server-wide setting, but it could be made per-request. */
     // TODO remove
@@ -435,6 +437,8 @@ public class RoutingRequest implements Cloneable, Serializable {
         
         //Default value when not using cars.
         co2Produced = 0.0;
+        //TODO read from file
+        searchTolerance = 5000;
     }
 
     public RoutingRequest(TraverseModeSet modes) {
@@ -813,7 +817,7 @@ public class RoutingRequest implements Cloneable, Serializable {
     }
 
     public void setRoutingContext(Graph graph) {
-        if (rctx == null) {
+        if (rctx == null || driveToPark) {
             // graphService.getGraph(routerId)
             this.rctx = new RoutingContext(this, graph);
             // check after back reference is established, to allow temp edge cleanup on exceptions
@@ -1171,4 +1175,12 @@ public class RoutingRequest implements Cloneable, Serializable {
     public ShortestPathTree getNewShortestPathTree() {
         return this.dominanceFunction.getNewShortestPathTree(this);
     }
+
+	public int getSearchTolerance() {
+		return searchTolerance;
+	}
+
+	public void setSearchTolerance(int searchTolerance) {
+		this.searchTolerance = searchTolerance;
+	}    
 }

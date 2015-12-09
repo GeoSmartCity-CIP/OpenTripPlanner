@@ -14,12 +14,12 @@
 package org.opentripplanner.routing.impl;
 
 
-import com.google.common.collect.Iterables;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.index.SpatialIndex;
-import com.vividsolutions.jts.index.strtree.STRtree;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+
 import org.opentripplanner.analyst.core.Sample;
 import org.opentripplanner.analyst.request.SampleFactory;
 import org.opentripplanner.common.geometry.GeometryUtils;
@@ -30,13 +30,18 @@ import org.opentripplanner.common.model.P2;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.TraversalRequirements;
 import org.opentripplanner.routing.core.TraverseModeSet;
-import org.opentripplanner.routing.edgetype.*;
+import org.opentripplanner.routing.edgetype.PatternEdge;
+import org.opentripplanner.routing.edgetype.SampleEdge;
+import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.TemporaryFreeEdge;
+import org.opentripplanner.routing.edgetype.TemporaryPartialStreetEdge;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.location.TemporaryStreetLocation;
 import org.opentripplanner.routing.services.StreetVertexIndexService;
 import org.opentripplanner.routing.util.ElevationUtils;
+import org.opentripplanner.routing.vertextype.ParkAndRideVertex;
 import org.opentripplanner.routing.vertextype.SampleVertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
@@ -46,7 +51,12 @@ import org.opentripplanner.util.ResourceBundleSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import com.google.common.collect.Iterables;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.index.SpatialIndex;
+import com.vividsolutions.jts.index.strtree.STRtree;
 
 /**
  * Indexes all edges and transit vertices of the graph spatially. Has a variety of query methods
@@ -66,7 +76,7 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
     private SpatialIndex edgeTree;
     private SpatialIndex transitStopTree;
     private SpatialIndex verticesTree;
-
+    
     // private static final double SEARCH_RADIUS_M = 100; // meters
     // private static final double SEARCH_RADIUS_DEG = DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
 
@@ -619,5 +629,44 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
         }
 
         return v;
+    }
+    
+    /**
+     * Returns all the park and ride vertices within a certain radius distance to the specified location. 
+     */
+    public List<Vertex> getNearbyParkAndRideVertices(RoutingRequest options) {
+        LOG.debug("Looking for/making a vertex near {}", options.from);
+        
+        ArrayList<Vertex> closestVertexList = new ArrayList<Vertex>();
+        
+        Coordinate coord = options.from.getCoordinate();
+        
+        closestVertexList.addAll(getLocalTransitStops(coord, options.searchTolerance));
+        
+        LOG.debug(" number of stops found: {}", closestVertexList.size());
+        
+        return closestVertexList;
+    }
+    
+    /**
+     * Get all transit stops within a given distance of a coordinate
+     * 
+     * @param distance
+     *            in meters
+     */
+    @SuppressWarnings("unchecked")
+    public List<Vertex> getLocalTransitStops(Coordinate c, double distance) {
+        Envelope env = new Envelope(c);
+        env.expandBy(SphericalDistanceLibrary.metersToDegrees(distance));
+        List<Vertex> nearby = verticesTree.query(env);
+        List<Vertex> results = new ArrayList<Vertex>();
+        for (Vertex v : nearby) {
+        	if(v instanceof ParkAndRideVertex) {
+	            if (SphericalDistanceLibrary.distance(v.getCoordinate(), c) <= distance) {
+	                results.add(v);
+	            }
+        	}
+        }
+        return results;
     }
 }
