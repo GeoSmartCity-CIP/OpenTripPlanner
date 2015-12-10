@@ -74,6 +74,10 @@ public abstract class RoutingResource {
     @QueryParam("co2Produced")
     protected Double co2Produced;
 
+    /** The search range for the driveToPark Service */
+    @QueryParam("carToParkRange")
+    protected Integer carToParkRange;
+    
     /** An ordered list of intermediate locations to be visited (see the fromPlace for format). Parameter can be specified multiple times. */
     @QueryParam("intermediatePlaces")
     protected List<String> intermediatePlaces;
@@ -401,6 +405,10 @@ public abstract class RoutingResource {
             } else {
                 request.setDateTime(date, time, tz);
             }
+        }
+        
+        if(carToParkRange != null) {
+        	request.setSearchDistance(carToParkRange);
         }
         
         if(co2Produced != null) {

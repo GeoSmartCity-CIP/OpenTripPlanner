@@ -641,7 +641,7 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
         
         Coordinate coord = options.from.getCoordinate();
         
-        closestVertexList.addAll(getLocalTransitStops(coord, options.searchTolerance));
+        closestVertexList.addAll(getLocalTransitStops(coord, options.searchDistance));
         
         LOG.debug(" number of stops found: {}", closestVertexList.size());
         

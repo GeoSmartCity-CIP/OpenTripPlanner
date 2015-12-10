@@ -18,8 +18,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.LocationNotAccessible;
+import org.opentripplanner.api.common.Message;
+import org.opentripplanner.routing.error.DriveToParkException;
+import org.opentripplanner.routing.error.DriveToParkRangeException;
 import org.opentripplanner.routing.error.GraphNotFoundException;
 import org.opentripplanner.routing.error.PathNotFoundException;
 import org.opentripplanner.routing.error.TransitTimesException;
@@ -42,6 +44,9 @@ public class PlannerError {
         messages.put(TrivialPathException.class,     Message.TOO_CLOSE);
         messages.put(GraphNotFoundException.class,   Message.GRAPH_UNAVAILABLE);
         messages.put(IllegalArgumentException.class, Message.BOGUS_PARAMETER);
+        
+        messages.put(DriveToParkRangeException.class,   Message.MAX_RANGE_EXCEEDED);
+        messages.put(DriveToParkException.class, Message.NO_PARKING_FOUND);
     }
     
     public int    id;

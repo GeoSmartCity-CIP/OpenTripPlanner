@@ -45,6 +45,9 @@ public enum Message {
     TRIANGLE_NOT_AFFINE(371),
     TRIANGLE_OPTIMIZE_TYPE_NOT_SET(372),
     TRIANGLE_VALUES_NOT_SET(373),
+    
+    MAX_RANGE_EXCEEDED(480),
+    NO_PARKING_FOUND(481),
     ;
 
     private Properties _c = getConfig();

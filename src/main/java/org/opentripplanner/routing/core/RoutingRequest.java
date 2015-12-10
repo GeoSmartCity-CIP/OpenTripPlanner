@@ -84,8 +84,13 @@ public class RoutingRequest implements Cloneable, Serializable {
     
     /** The amount of co2 produced by the car on transit. (Defaults to 0 when not using cars) */
     public Double co2Produced;
-    /** search max distance. */
-    public int searchTolerance ;
+    /** search distance. */
+    public Integer searchDistance;
+    /** search default distance. */
+    public final Integer defaultSearchDistance = 500;
+    /** search max distance. 2000mt */
+    public final Integer maxSearchDistance = 2000;
+    
     /**
      * The maximum time (in seconds) of pre-transit travel when using drive-to-transit (park and
      * ride or kiss and ride). Defaults to unlimited.
@@ -437,8 +442,6 @@ public class RoutingRequest implements Cloneable, Serializable {
         
         //Default value when not using cars.
         co2Produced = 0.0;
-        //TODO read from file
-        searchTolerance = 5000;
     }
 
     public RoutingRequest(TraverseModeSet modes) {
@@ -1176,11 +1179,19 @@ public class RoutingRequest implements Cloneable, Serializable {
         return this.dominanceFunction.getNewShortestPathTree(this);
     }
 
-	public int getSearchTolerance() {
-		return searchTolerance;
+	public Integer getSearchDistance() {
+		return searchDistance;
 	}
 
-	public void setSearchTolerance(int searchTolerance) {
-		this.searchTolerance = searchTolerance;
-	}    
+	public void setSearchDistance(Integer searchDistance) {
+		this.searchDistance = searchDistance;
+	}
+
+	public Integer getMaxSearchDistance() {
+		return maxSearchDistance;
+	}  
+	
+	public Integer getDefaultSearchDistance() {
+		return defaultSearchDistance;
+	}  
 }

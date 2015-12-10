@@ -30,6 +30,8 @@ import org.opentripplanner.routing.algorithm.strategies.TrivialRemainingWeightHe
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.edgetype.LegSwitchingEdge;
+import org.opentripplanner.routing.error.DriveToParkException;
+import org.opentripplanner.routing.error.DriveToParkRangeException;
 import org.opentripplanner.routing.error.PathNotFoundException;
 import org.opentripplanner.routing.error.VertexNotFoundException;
 import org.opentripplanner.routing.graph.Edge;
@@ -200,13 +202,23 @@ public class GraphPathFinder {
         	
         	//Handles driveToPark requests
         	if(request.driveToPark) {
-        		List<Vertex> parkings = router.graph.streetIndex.getNearbyParkAndRideVertices(request);
+        		if(request.getSearchDistance() == null) {
+        			LOG.warn("No range was specified for the request. Using default value:"+request.getDefaultSearchDistance()+"mt.");
+        			request.setSearchDistance(request.getDefaultSearchDistance());
+        		} else if(request.getSearchDistance() > request.getMaxSearchDistance()) {
+        			LOG.error("The research range exceedes the maximum allowed value:"+request.getMaxSearchDistance()+" mt. Please choose a lower value.");
+        			throw new DriveToParkRangeException();
+        		}
         		
+        		List<Vertex> parkings = router.graph.streetIndex.getNearbyParkAndRideVertices(request);
+        		if(parkings.size() == 0) {
+        			LOG.error("No parkings found in the search area in the specified range:"+request.getSearchDistance()+"mt. Try again choosing a wider range.");
+        			throw new DriveToParkException();
+        		}
         		List<GraphPath> routesToParkings = new ArrayList<GraphPath>();
         		for(Vertex park: parkings) {
         			request.to = new GenericLocation(park.getCoordinate());
         			List<GraphPath> leadToParking = getPaths(request);
-        			//TODO change error types when paths not found
         			if(leadToParking.size() > 0) {
         				//element 0 should be the closest route
         				routesToParkings.add(leadToParking.get(0));
