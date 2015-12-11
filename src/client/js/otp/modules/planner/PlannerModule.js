@@ -107,6 +107,9 @@ otp.modules.planner.PlannerModule =
         460 : _tr("Both origin and destination are unknown. Can you be a bit more descriptive?"),
         470 : _tr("Both origin and destination are not wheelchair accessible"),
         409 : _tr("Origin is within a trivial distance of the destination."),
+        
+        480 : _tr("The research range exceedes the maximum allowed value."),
+        481 : _tr("No parkings found in the search area in the specified range."),
 
         340 : _tr("The trip planner is unsure of the location you want to start from. Please select from the following options, or be more specific."),
         350 : _tr("The trip planner is unsure of the destination you want to go to. Please select from the following options, or be more specific."),

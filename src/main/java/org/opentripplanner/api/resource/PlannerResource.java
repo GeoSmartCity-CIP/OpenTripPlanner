@@ -78,6 +78,11 @@ public class    PlannerResource extends RoutingResource {
             /* Convert the internal GraphPaths to a TripPlan object that is included in an OTP web service Response. */
             TripPlan plan = GraphPathToTripPlanConverter.generatePlan(paths, request);
             response.setPlan(plan);
+            
+            //when in driveToPark mode there is not a single destination, but N , one for each parking found in the specified range
+            if(request.driveToPark) {
+            	response.getPlan().to = null;
+            }
 
         } catch (Exception e) {
             PlannerError error = new PlannerError(e);
