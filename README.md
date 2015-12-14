@@ -4,4 +4,4 @@ OpenTripPlanner (OTP) is an open source multi-modal trip planner. It depends on 
 
 ## GSC-Opentripplanner 
 
-GSC-Opentripplanner is a OTP's customization that adds the calculation on the production of CO2 to the paths obtained.
+GSC-Opentripplanner is a OTP's customization that adds the calculation on the production of CO2 to the paths obtained and the new modal "drive to park".
