@@ -79,6 +79,9 @@ msgstr ""
 msgid "Bike and Ride"
 msgstr ""
 
+msgid "Drive to park"
+msgstr ""
+
 #. Travel by: mode of transport (Used in selection in Travel
 #. Options widgets)
 #: src/client/js/otp/config.js:313
@@ -1135,6 +1138,9 @@ msgid "Wheelchair accesible trip:"
 msgstr ""
 
 msgid "Co2 produced g/km:"
+msgstr ""
+
+msgid "Search parking range m.:"
 msgstr ""
 
 #. Label for dropdown Travel by: [mode of transport]

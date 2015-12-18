@@ -283,7 +283,7 @@ otp.modules.planner.PlannerModule =
 
     getEndOTPString : function() {
         return (this.endName !== null ? this.endName + "::" : "")
-                + this.endLatLng.lat+','+this.endLatLng.lng;
+                + (this.endLatLng != null ? this.endLatLng.lat+','+this.endLatLng.lng : "");
     },
 
     restoreTrip : function(queryParams) {
@@ -325,7 +325,7 @@ otp.modules.planner.PlannerModule =
         }
         else
         {
-            if(this.startLatLng == null || this.endLatLng == null) {
+            if(this.startLatLng == null || (this.endLatLng == null && this.mode != 'CAR_DRIVETOPARK') ) {
                 // TODO: alert user
                 return;
             }
@@ -360,6 +360,7 @@ otp.modules.planner.PlannerModule =
             if(this.maxHours) queryParams.maxHours = this.maxHours;
             if(this.numItineraries) queryParams.numItineraries = this.numItineraries;
             if(this.co2Produced) queryParams.co2Produced = this.co2Produced;
+            if(this.carToParkRange) queryParams.carToParkRange = this.carToParkRange;
             if(this.minTransferTime) queryParams.minTransferTime = this.minTransferTime;
             if(this.showIntermediateStops) queryParams.showIntermediateStops = this.showIntermediateStops;
 

@@ -493,6 +493,47 @@ otp.widgets.tripoptions.Co2Selector =
 });
 
 
+//** carToParkRange **//
+
+otp.widgets.tripoptions.SearchParkingRangeSelector =
+    otp.Class(otp.widgets.tripoptions.TripOptionsWidgetControl, {
+
+    id           :  null,
+    label        : _tr("Search parking range m.:"),
+
+    initialize : function(tripWidget) {
+
+        otp.widgets.tripoptions.TripOptionsWidgetControl.prototype.initialize.apply(this, arguments);
+
+        this.id = tripWidget.id;
+
+
+        ich['otp-tripOptions-parkingrange']({
+            widgetId : this.id,
+            label : this.label,
+        }).appendTo(this.$());
+
+    },
+
+    doAfterLayout : function() {
+        var this_ = this;
+
+        $("#"+this.id+"-parkingrange-input").change(function() {
+            this_.tripWidget.module.carToParkRange = this.value;
+        });
+    },
+
+    restorePlan : function(data) {
+        if(data.queryParams.wheelchair) {
+            $("#"+this.id+"-parkingrange-input").prop("value", data.queryParams.carToParkRange);
+        }
+    },
+
+    isApplicableForMode : function(mode) {
+        return (mode == "CAR_DRIVETOPARK");
+    }
+});
+
 //** ModeSelector **//
 
 otp.widgets.tripoptions.ModeSelector =
@@ -556,6 +597,18 @@ otp.widgets.tripoptions.ModeSelector =
         var container = $("#"+this.id+'-widgets');
         container.empty();
         var mode = _.keys(this.modes)[document.getElementById(this.id).selectedIndex];
+        if (mode == 'CAR_DRIVETOPARK')
+        {
+        	 $("#endInputId").hide();
+        	 $("#endDivId").hide();
+        	 $("#reverseDivId").hide();
+        }
+        else
+        {
+        	 $("#endInputId").show();
+        	 $("#endDivId").show();
+        	 $("#reverseDivId").show();
+        }
         for(var i = 0; i < this.modeControls.length; i++) {
             var control = this.modeControls[i];
             if(control.isApplicableForMode(mode)) {
