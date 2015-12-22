@@ -16,6 +16,7 @@ package org.opentripplanner.routing.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -224,6 +225,18 @@ public class GraphPathFinder {
         				routesToParkings.add(leadToParking.get(0));
         			}
         		}
+        		Collections.sort( routesToParkings, new Comparator< GraphPath >( ){
+        			public int compare(GraphPath g1, GraphPath g2) {
+        	    	
+        		      Integer length1 = g1.getDuration();
+        		      Integer length2 = g2.getDuration();
+        		      
+        		      //ascending order
+        		      return length1.compareTo(length2);
+        		      
+        		      //descending order
+        		      //return length2.compareTo(length1);
+        		    }} );
         		return routesToParkings;
         	}
         	
