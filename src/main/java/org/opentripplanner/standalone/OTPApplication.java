@@ -1,9 +1,10 @@
 package org.opentripplanner.standalone;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.fasterxml.jackson.jaxrs.xml.JacksonXMLProvider;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
+
+import javax.ws.rs.core.Application;
 
 import org.glassfish.jersey.CommonProperties;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -11,16 +12,35 @@ import org.glassfish.jersey.server.ServerProperties;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.opentripplanner.api.common.OTPExceptionMapper;
 import org.opentripplanner.api.model.JSONObjectMapperProvider;
-import org.opentripplanner.api.resource.*;
+import org.opentripplanner.api.resource.AlertPatcher;
+import org.opentripplanner.api.resource.BikeRental;
+import org.opentripplanner.api.resource.ExternalGeocoderResource;
+import org.opentripplanner.api.resource.GraphInspectorTileResource;
+import org.opentripplanner.api.resource.LIsochrone;
+import org.opentripplanner.api.resource.LegendResource;
+import org.opentripplanner.api.resource.PlannerResource;
+import org.opentripplanner.api.resource.PointSetResource;
+import org.opentripplanner.api.resource.ProfileResource;
+import org.opentripplanner.api.resource.RepeatedRaptorTestResource;
+import org.opentripplanner.api.resource.Routers;
+import org.opentripplanner.api.resource.SIsochrone;
+import org.opentripplanner.api.resource.ScenarioResource;
+import org.opentripplanner.api.resource.ScriptResource;
+import org.opentripplanner.api.resource.ServerInfo;
+import org.opentripplanner.api.resource.SimpleIsochrone;
+import org.opentripplanner.api.resource.SurfaceResource;
+import org.opentripplanner.api.resource.TileService;
+import org.opentripplanner.api.resource.TimeGridWs;
+import org.opentripplanner.api.resource.UpdaterStatusResource;
 import org.opentripplanner.index.GeocoderResource;
 import org.opentripplanner.index.IndexAPI;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import javax.ws.rs.core.Application;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.fasterxml.jackson.jaxrs.xml.JacksonXMLProvider;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.opentripplanner.api.nextDepartureTime.NextDepartureTimeResource;
 
 /**
  * A JAX-RS Application subclass which provides hard-wired configuration of an OTP server.
@@ -96,7 +116,8 @@ public class OTPApplication extends Application {
             RepeatedRaptorTestResource.class,
             /* Features and Filters: extend Jersey, manipulate requests and responses. */
             CorsFilter.class,
-            MultiPartFeature.class
+            MultiPartFeature.class,
+            NextDepartureTimeResource.class
         ));
         
         if (this.secure) {
