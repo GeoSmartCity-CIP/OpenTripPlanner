@@ -73,9 +73,14 @@ public class NextDepartureTimeResource {
 	@QueryParam("buffer") Double buffer;
 	
 	/**
+	 * research starting date. Defaults to server current time.
+	 */
+	@QueryParam("date") String date;
+	
+	/**
 	 * research starting time. Defaults to server current time.
 	 */
-	@QueryParam("time") Long time;
+	@QueryParam("time") String time;
 	
 	/**
 	 * research starting time offset in minutes. Defaults to 30 mins.
@@ -99,6 +104,8 @@ public class NextDepartureTimeResource {
     private SpatialIndex transitStopTree;
     private SpatialIndex verticesTree;
 	
+    private long calculatedTime;
+    
     /**
      *  This service retrieves all the stops within a specified range from the given coordinate. 
      *  Then for every stop found it returns the next departure time of each line avaliable at that stop.
@@ -142,14 +149,50 @@ public class NextDepartureTimeResource {
     	if(buffer == null) {
     		buffer = 500d;
     	}
-    	if(time == null) {
-    		time = System.currentTimeMillis() / 1000;
+    	if(time == null && date == null) {
+    		calculatedTime = System.currentTimeMillis() / 1000;
+    	} else if(time != null && date != null) {
+    		calculatedTime = convertDateAndTimeToTimestamp(date,time) /1000;
+    	} else {
+    		calculatedTime = 0;
     	}
+    	
+    	
     	if(timeOffset == null) {
     		timeOffset = 30;
     	}
     	
     	LOG.info("setDefaults elaboration ended..."); 
+    }
+    
+    private long convertDateAndTimeToTimestamp(String date,String time) {
+    	GregorianCalendar calendar = new GregorianCalendar(graph.getTimeZone());
+    	
+    	//Date parameter is in the format MM-dd-yyyy
+    	String[] split = date.split("-");
+    	Integer month = Integer.parseInt(split[0]);
+    	Integer day = Integer.parseInt(split[1]);
+    	Integer year = Integer.parseInt(split[2]);
+    	
+    	calendar.set(Calendar.DAY_OF_MONTH, day);
+    	//check calendar behaviour, it indexes months from 0 to 11.
+    	calendar.set(Calendar.MONTH, month-1);
+    	calendar.set(Calendar.YEAR, year);
+    	
+    	//Time parameter is in the format hh:mmam or hh:mmpm
+    	String[] timeSplit = time.split(":");
+    	Integer hours = Integer.parseInt(timeSplit[0]);
+    	Integer minutes = Integer.parseInt(timeSplit[1].substring(0, 2));
+    	String am = timeSplit[1].substring(2);
+    	
+    	if("am".equalsIgnoreCase(am)) {
+    		calendar.set(Calendar.HOUR_OF_DAY,hours);
+    	} else {
+    		calendar.set(Calendar.HOUR_OF_DAY,hours+12);
+    	}
+    	calendar.set(Calendar.MINUTE,minutes);
+
+    	return calendar.getTimeInMillis();
     }
     
     /**
@@ -176,6 +219,10 @@ public class NextDepartureTimeResource {
     	
     	if(time != null) {
     		requestParameters.put("time",time.toString());
+    	}
+    	
+    	if(date != null) {
+    		requestParameters.put("date",date.toString());
     	}
     	
     	if(timeOffset != null) {
@@ -306,6 +353,17 @@ public class NextDepartureTimeResource {
 	    NextDepartureTimeResults nextDepartureTimeResults = new NextDepartureTimeResults();
 	    nextDepartureTimeResults.setRequestParameters(createNextDepartureParameters());
 	    
+	    if(calculatedTime == 0) {
+	    	nextDepartureTimeResults.setError("date/time parameters were not passed. Use both or none.");
+			return nextDepartureTimeResults;
+	    }
+	    
+	    //convert time parameter into a date before searching for stopTimes
+		calendar.setTime(new Date((calculatedTime+ timeOffset*60)*1000));	
+		String date = createDate(calendar);
+		
+		
+		
 	    for(Vertex v : results) {
 	    	PatternDepartVertex pdv = (PatternDepartVertex) v;
 
@@ -328,9 +386,6 @@ public class NextDepartureTimeResource {
 	    	NextDepartureTimeResult nextDepartureTimeResult = new NextDepartureTimeResult(pdv.getLat(),pdv.getLon(),pdv.getName());
 	    		
 			List<StopTimesInPattern> list = null;
-			//convert time parameter into a date before searching for stopTimes
-			calendar.setTime(new Date(time*1000));	
-			String date = createDate(calendar);
 			
 			try {
 				list = this.graph.index.getStopTimesForStop(pdv.getStop(),ServiceDate.parseString(date));
@@ -344,14 +399,22 @@ public class NextDepartureTimeResource {
 			for(StopTimesInPattern stopTimes : list) {	
 				String line = stopTimes.pattern.desc;
 				
-				//if line number parameter is not null check only the selected line.
-				if(lineNumber != null && lineNumber != line) {
+//				//if line number parameter is not null check only the selected line.
+//				if(lineNumber != null && lineNumber != line) {
+//					continue;
+//				}
+				//FIXME currently we are providing a more flexible line matching comparison.
+				//since line identifier can be quite long we just match the line number instead of the whole string
+				//the is also due to the fact that different gtfs may give different name structure for it.
+				//the complete string is for example:  21 to Tortinmäki (16:1149) from Kauppatori (16:T9) via Virusmäentie (16:176)
+				// we just check if the string contains the short name (21 in the above example).
+				if(lineNumber != null && !line.contains(lineNumber)) {
 					continue;
 				}
 				
 				for(TripTimeShort tts : stopTimes.times) {
 					Long departureTime = tts.serviceDay + tts.scheduledDeparture;
-					if(departureTime > time + timeOffset*60) {
+					if(departureTime > calculatedTime + timeOffset*60) {
 						calendar.setTime(new Date(departureTime*1000));
 						lineAndTime.put(line, calendar.getTime().toString());
 						break;
