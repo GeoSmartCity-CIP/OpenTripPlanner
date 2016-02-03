@@ -5,3 +5,10 @@ OpenTripPlanner (OTP) is an open source multi-modal trip planner. It depends on 
 ## GSC-Opentripplanner 
 
 GSC-Opentripplanner is a OTP's customization that adds the calculation on the production of CO2 to the paths obtained and the new modal "drive to park".
+
+## More information
+ * Drive to park [here](https://github.com/GeoSmartCity-CIP/gsc-opentripplanner/wiki/GSC-Drive-to-park) 
+ * Multimodal trip plan [here](https://github.com/GeoSmartCity-CIP/gsc-opentripplanner/wiki/GSC-Multimodal-trip-planning-instructions) 
+
+## Funding
+The development of this branch of Opentripplanner is part-funded by the European Commission through the GeoSmartCities project.
