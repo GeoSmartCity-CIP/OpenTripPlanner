@@ -9,6 +9,7 @@ GSC-Opentripplanner is a OTP's customization that adds the calculation on the pr
 ## More information
  * Drive to park [here](https://github.com/GeoSmartCity-CIP/gsc-opentripplanner/wiki/GSC-Drive-to-park) 
  * Multimodal trip plan [here](https://github.com/GeoSmartCity-CIP/gsc-opentripplanner/wiki/GSC-Multimodal-trip-planning-instructions) 
+ * Next departure time [here] (https://github.com/GeoSmartCity-CIP/gsc-opentripplanner/wiki/GSC---Next-departure-time)
 
 ## Funding
 The development of this branch of Opentripplanner is part-funded by the European Commission through the GeoSmartCities project.
