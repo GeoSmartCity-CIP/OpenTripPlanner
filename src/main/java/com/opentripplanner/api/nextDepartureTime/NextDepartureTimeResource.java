@@ -1,6 +1,7 @@
 package com.opentripplanner.api.nextDepartureTime;
 
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -130,7 +131,11 @@ public class NextDepartureTimeResource {
     	Router router = otpServer.getRouter(routerId);
     	initializeTrees(router.graph,true);
     	
-    	setDefaults();
+    	try {
+    		setDefaults();
+    	} catch(Exception e) {
+    		return createErrorResponse(e.getMessage());
+    	}
   
         List<Vertex> closestVertexList = getLocalPatternDepartVertex();
         NextDepartureTimeResults response = getResponse(closestVertexList);
@@ -142,8 +147,9 @@ public class NextDepartureTimeResource {
     
     /**
      *  Set parameters to default values if they were not passed through the request.
+     * @throws Exception 
      */
-    private void setDefaults() {
+    private void setDefaults() throws Exception {
     	LOG.info("setDefaults elaboration..."); 
     	
     	if(buffer == null) {
@@ -165,32 +171,65 @@ public class NextDepartureTimeResource {
     	LOG.info("setDefaults elaboration ended..."); 
     }
     
-    private long convertDateAndTimeToTimestamp(String date,String time) {
+    private long convertDateAndTimeToTimestamp(String date,String time) throws Exception {
+    	
     	GregorianCalendar calendar = new GregorianCalendar(graph.getTimeZone());
     	
-    	//Date parameter is in the format MM-dd-yyyy
-    	String[] split = date.split("-");
-    	Integer month = Integer.parseInt(split[0]);
-    	Integer day = Integer.parseInt(split[1]);
-    	Integer year = Integer.parseInt(split[2]);
-    	
-    	calendar.set(Calendar.DAY_OF_MONTH, day);
-    	//check calendar behaviour, it indexes months from 0 to 11.
-    	calendar.set(Calendar.MONTH, month-1);
-    	calendar.set(Calendar.YEAR, year);
-    	
-    	//Time parameter is in the format hh:mmam or hh:mmpm
-    	String[] timeSplit = time.split(":");
-    	Integer hours = Integer.parseInt(timeSplit[0]);
-    	Integer minutes = Integer.parseInt(timeSplit[1].substring(0, 2));
-    	String am = timeSplit[1].substring(2);
-    	
-    	if("am".equalsIgnoreCase(am)) {
-    		calendar.set(Calendar.HOUR_OF_DAY,hours);
-    	} else {
-    		calendar.set(Calendar.HOUR_OF_DAY,hours+12);
+    	try {
+	    	
+	    	
+	    	//Date parameter is in the format MM-dd-yyyy
+    		if(!isDateFormatValid(date)) {
+    			throw new Exception("Date parameter is not well formatted. Use the following syntax MM-dd-yyyy");
+    		}
+	    	String[] split = date.split("-");
+	    	Integer month = Integer.parseInt(split[0]);
+	    	Integer day = Integer.parseInt(split[1]);
+	    	Integer year = Integer.parseInt(split[2]);
+	    	if(month <= 0 || month > 12 ) {
+	    		throw new Exception("Month must contain values within 1 and 12");
+	    	}
+	    	if(day <= 0 || day > 31 ) {
+	    		throw new Exception("Day must contain values within 1 and 31");
+	    	}
+	    	
+	    	calendar.set(Calendar.DAY_OF_MONTH, day);
+	    	//check calendar behaviour, it indexes months from 0 to 11.
+	    	calendar.set(Calendar.MONTH, month-1);
+	    	calendar.set(Calendar.YEAR, year);
+	    	
+	    	if(!time.matches("\\d\\d:\\d\\d(am|pm|AM|PM)")) {
+	    		throw new Exception("Time parameter is not well formatted. Use the following syntax hh:mmAM or hh:mmPM");
+	    	}
+	    	//Time parameter is in the format hh:mmam or hh:mmpm
+	    	String[] timeSplit = time.split(":");
+	    	Integer hours = Integer.parseInt(timeSplit[0]);
+	    	Integer minutes = Integer.parseInt(timeSplit[1].substring(0, 2));
+	    	String am = timeSplit[1].substring(2);
+	    	
+	    	if(hours <= 0 || hours > 12 ) {
+	    		throw new Exception("Hours must contain values within 1 and 12");
+	    	}
+	    	
+	    	if("am".equalsIgnoreCase(am)) {
+	    		// 12 am is midnight
+	    		if(hours == 12) {
+	    			calendar.set(Calendar.HOUR_OF_DAY,hours-12);
+	    		} else {
+	    			calendar.set(Calendar.HOUR_OF_DAY,hours);
+	    		}
+	    	} else {
+	    		// 12 pm is noon
+	    		if(hours == 12) {
+	    			calendar.set(Calendar.HOUR_OF_DAY,hours);
+	    		} else {
+	    			calendar.set(Calendar.HOUR_OF_DAY,hours+12);
+	    		}
+	    	}
+	    	calendar.set(Calendar.MINUTE,minutes);
+    	}catch(NumberFormatException nfe) {
+    		throw new Exception("error with the specified date/time parameters format.");
     	}
-    	calendar.set(Calendar.MINUTE,minutes);
 
     	return calendar.getTimeInMillis();
     }
@@ -366,7 +405,7 @@ public class NextDepartureTimeResource {
 		
 	    for(Vertex v : results) {
 	    	PatternDepartVertex pdv = (PatternDepartVertex) v;
-
+	    	//System.out.println(pdv.getTripPattern().mode.toString());
 	    	//check if vertex has already been taken into account.
 	    	if(nextDepartureTimeResults.getResults() != null) {
 	    		boolean found = false;
@@ -390,12 +429,9 @@ public class NextDepartureTimeResource {
 			try {
 				list = this.graph.index.getStopTimesForStop(pdv.getStop(),ServiceDate.parseString(date));
 			} catch (ParseException e) {
-				nextDepartureTimeResults.setError("Error converting time to date");
-				return nextDepartureTimeResults;
+				return createErrorResponse("Error converting time to date");
 			}
-			
-			
-			Map<String,String> lineAndTime = new HashMap<String,String>();
+
 			for(StopTimesInPattern stopTimes : list) {	
 				String line = stopTimes.pattern.desc;
 				
@@ -416,14 +452,16 @@ public class NextDepartureTimeResource {
 					Long departureTime = tts.serviceDay + tts.scheduledDeparture;
 					if(departureTime > calculatedTime + timeOffset*60) {
 						calendar.setTime(new Date(departureTime*1000));
-						lineAndTime.put(line, calendar.getTime().toString());
+						LineAndTime lt = new LineAndTime(line,calendar.getTime().toString());
+						nextDepartureTimeResult.getLineAndTime().add(lt);
+						//lineAndTime.put(line, calendar.getTime().toString());
 						break;
 					}
 				}	
 			}
-			nextDepartureTimeResult.setLineAndTime(lineAndTime);
+			//nextDepartureTimeResult.setLineAndTime(lineAndTime);
 			
-			if(lineAndTime.size() != 0) {
+			if(nextDepartureTimeResult.getLineAndTime().size() != 0) {
 				nextDepartureTimeResults.addResult(nextDepartureTimeResult);
 			}
 	    }
@@ -462,5 +500,34 @@ public class NextDepartureTimeResource {
     	LOG.info("createDate elaboration ended..."); 
     	 
     	return sb.toString();
+    }
+    
+    /**
+     * Creates a response containing the explanation of the problem that happened during the execution.
+     * 
+     * @param error
+     * @return
+     */
+    private NextDepartureTimeResults createErrorResponse(String error) {
+    	NextDepartureTimeResults nextDepartureTimeResults = new NextDepartureTimeResults();
+	    nextDepartureTimeResults.setRequestParameters(createNextDepartureParameters());
+    	nextDepartureTimeResults.setError(error);
+		return nextDepartureTimeResults;
+    }
+    
+    /**
+     * 
+     * Returns true if the date format is MM-dd-yyyy, false otherwise
+     * 
+     * @param value
+     * @return
+     */
+    private boolean isDateFormatValid(String value) {
+    	try {
+    		new SimpleDateFormat("MM-dd-yyyy").parse(value);
+    		return true;
+    	} catch (Exception ex) {
+    		return false;
+    	}
     }
 }

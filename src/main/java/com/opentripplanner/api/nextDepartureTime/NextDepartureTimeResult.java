@@ -13,14 +13,15 @@
 
 package com.opentripplanner.api.nextDepartureTime;
 
-import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
 
 public class NextDepartureTimeResult {
     
     private double lat;
     private double lng;
     private String stopName;
-    private Map<String,String> lineAndTime;
+    private List<LineAndTime> lineAndTime;
     
     public NextDepartureTimeResult() {}
 
@@ -28,6 +29,7 @@ public class NextDepartureTimeResult {
         this.lat = lat;
         this.lng = lng;
         this.stopName = stopName;
+        lineAndTime = new LinkedList<LineAndTime>();
     }
 
     public double getLat() {
@@ -46,11 +48,11 @@ public class NextDepartureTimeResult {
         this.lng = lng;
     }
 
-	public Map<String, String> getLineAndTime() {
+	public List<LineAndTime> getLineAndTime() {
 		return lineAndTime;
 	}
 
-	public void setLineAndTime(Map<String, String> lineAndTime) {
+	public void setLineAndTime(List<LineAndTime> lineAndTime) {
 		this.lineAndTime = lineAndTime;
 	}
 
