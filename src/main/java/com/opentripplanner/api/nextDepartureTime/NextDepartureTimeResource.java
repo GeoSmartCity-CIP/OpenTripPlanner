@@ -9,6 +9,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -84,7 +85,7 @@ public class NextDepartureTimeResource {
 	@QueryParam("time") String time;
 	
 	/**
-	 * research starting time offset in minutes. Defaults to 30 mins.
+	 * Defines the maximum amount of time past the starting time after which no more departure times are taken into account. Defaults to 30 mins.
 	 */
 	@QueryParam("timeOffset") Integer timeOffset;
 	
@@ -156,7 +157,9 @@ public class NextDepartureTimeResource {
     		buffer = 500d;
     	}
     	if(time == null && date == null) {
-    		calculatedTime = System.currentTimeMillis() / 1000;
+    		//Check if correct XXX
+    		
+    		calculatedTime = ((System.currentTimeMillis() - TimeZone.getDefault().getRawOffset()) + graph.getTimeZone().getRawOffset()) / 1000;
     	} else if(time != null && date != null) {
     		calculatedTime = convertDateAndTimeToTimestamp(date,time) /1000;
     	} else {
@@ -173,7 +176,7 @@ public class NextDepartureTimeResource {
     
     private long convertDateAndTimeToTimestamp(String date,String time) throws Exception {
     	
-    	GregorianCalendar calendar = new GregorianCalendar(graph.getTimeZone());
+    	GregorianCalendar calendar = new GregorianCalendar();
     	
     	try {
 	    	
@@ -398,7 +401,7 @@ public class NextDepartureTimeResource {
 	    }
 	    
 	    //convert time parameter into a date before searching for stopTimes
-		calendar.setTime(new Date((calculatedTime+ timeOffset*60)*1000));	
+	    calendar.setTime(new Date(calculatedTime*1000));
 		String date = createDate(calendar);
 		
 		
@@ -450,7 +453,7 @@ public class NextDepartureTimeResource {
 				
 				for(TripTimeShort tts : stopTimes.times) {
 					Long departureTime = tts.serviceDay + tts.scheduledDeparture;
-					if(departureTime > calculatedTime + timeOffset*60) {
+					if(departureTime > calculatedTime && departureTime < calculatedTime + timeOffset*60) {
 						calendar.setTime(new Date(departureTime*1000));
 						LineAndTime lt = new LineAndTime(line,calendar.getTime().toString());
 						nextDepartureTimeResult.getLineAndTime().add(lt);
