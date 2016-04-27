@@ -1,0 +1,107 @@
+<html lang="it">
+<head>
+	<title>Next departure time Test Service</title>
+	<script language="JavaScript">
+			/*------------------------------------------------------*/
+			  function reqServiceForm() {
+			/*------------------------------------------------------*/
+				return false;
+			  }
+
+
+			/*------------------------------------------------------*/
+			  function sendRequest() {
+			/*------------------------------------------------------*/
+				document.form.action = "../otp/routers/default/plan?"; 
+                
+				document.form.submit();
+
+				return false;
+			  }
+
+
+			/*------------------------------------------------------*/
+			  function cleanThisForm() {
+			/*------------------------------------------------------*/
+				document.form.fromPlace.value = '60.451123027562986,22.26929783821106';
+				document.form.time.value = '9:24am';
+				document.form.date.value = '12-17-2015';
+				document.form.carToParkRange.value = '1000';
+
+				return false;
+			  }
+		</script>
+		<style type="text/css">
+			.titolo2{
+				font-weight: bold;
+			}
+		</style>
+</head>
+<body>
+	<!-- form name="form"-->
+	<form name="form" method="GET" enctype="multipart/form-data">
+		<center>
+			<table>
+				
+				<tr>
+					<td>
+						<p class="titolo2">Drive to park Test Service</p>
+					</td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+				</tr>				
+				<tr>
+					<td>
+						<p class="titolo2">From :</p>
+					</td>
+					<td>
+						<input type="text" name="fromPlace" value="60.451123027562986,22.26929783821106"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p class="titolo2">Mode :</p>
+					</td>
+					<td>
+						<input type="text" name="mode" value="CAR_DRIVETOPARK" readonly="readonly"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p class="titolo2">Time :</p>
+					</td>
+					<td>
+						<input type="text" name="time" value="9:24am"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p class="titolo2">Date :</p>
+					</td>
+					<td>
+						<input type="text" name="date" value="12-07-2015"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p class="titolo2">Car to Park Range :</p>
+					</td>
+					<td>
+						<input type="text" name="carToParkRange" value="1000"/>
+					</td>
+				</tr>								
+				<tr>
+					<td>&nbsp;</td>
+				</tr>
+				<tr align="center">
+					<td align="center">
+						<input type="button" value="Send" onclick="javascript:sendRequest(); void(null);" />
+						<input type="button" value="Clear" onclick="javascript:cleanThisForm(); void(null);" />
+					</td>
+				</tr>
+			</table>
+		</center>
+	</form>
+</body>
+</html>
